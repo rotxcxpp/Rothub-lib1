@@ -1,44 +1,44 @@
--- Feral Library (Asset ID Support)
-local FeralLib = {}
+local Library = {}
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 
-function FeralLib:CreateWindow(Config)
+function Library:CreateWindow(Config)
     local WindowName = Config.Name or "Feral Hub"
-    local LogoID = Config.LogoID or "rbxassetid://0" -- Varsayılan boş asset
+    local LogoID = Config.LogoID or "rbxassetid://0" -- Görsel ID buraya gelecek
 
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "FeralUI_Updated"
+    ScreenGui.Name = "FeralUI_Library"
     ScreenGui.Parent = CoreGui
-    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+    -- Ana Panel
     local Main = Instance.new("Frame")
     Main.Name = "Main"
     Main.Size = UDim2.new(0, 630, 0, 390)
     Main.Position = UDim2.new(0.5, -315, 0.5, -195)
     Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-    Main.BackgroundTransparency = 0.15 -- İstediğin transparanlık
+    Main.BackgroundTransparency = 0.15 -- Transparan Arka Plan
     Main.BorderSizePixel = 0
     Main.Parent = ScreenGui
 
     local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.CornerRadius = UDim.new(0, 5)
     Corner.Parent = Main
-    
+
     local Stroke = Instance.new("UIStroke")
-    Stroke.Color = Color3.fromRGB(45, 45, 45)
+    Stroke.Color = Color3.fromRGB(35, 35, 35)
     Stroke.Thickness = 1
     Stroke.Parent = Main
 
-    -- Header (Logo ve Başlık Alanı)
+    -- Üst Bar (Header)
     local Header = Instance.new("Frame")
     Header.Size = UDim2.new(1, 0, 0, 38)
     Header.BackgroundTransparency = 1
     Header.Parent = Main
 
-    -- GÜL YERİNE GELEN IMAGE (Asset ID Alanı)
+    -- ASSET ID LOGO
     local Logo = Instance.new("ImageLabel")
     Logo.Name = "Logo"
     Logo.Size = UDim2.new(0, 22, 0, 22)
@@ -58,7 +58,7 @@ function FeralLib:CreateWindow(Config)
     Title.BackgroundTransparency = 1
     Title.Parent = Header
 
-    -- Sürükleme Mantığı (Draggable)
+    -- Sürükleme (Drag) Sistemi
     local dragToggle, dragStart, startPos
     Header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -75,7 +75,7 @@ function FeralLib:CreateWindow(Config)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then dragToggle = false end
     end)
 
-    -- Sidebar ve İçerik (Kısaltılmış Mantık)
+    -- Sidebar (Sol Bölüm)
     local Sidebar = Instance.new("Frame")
     Sidebar.Size = UDim2.new(0, 160, 1, -38)
     Sidebar.Position = UDim2.new(0, 0, 0, 38)
@@ -87,26 +87,37 @@ function FeralLib:CreateWindow(Config)
     TabHolder.BackgroundTransparency = 1
     TabHolder.ScrollBarThickness = 0
     TabHolder.Parent = Sidebar
-    Instance.new("UIListLayout", TabHolder).Padding = UDim.new(0, 2)
+    local TabList = Instance.new("UIListLayout")
+    TabList.Padding = UDim.new(0, 2)
+    TabList.Parent = TabHolder
 
+    -- İçerik Alanı
     local Container = Instance.new("Frame")
     Container.Size = UDim2.new(1, -160, 1, -38)
     Container.Position = UDim2.new(0, 160, 0, 38)
     Container.BackgroundTransparency = 1
     Container.Parent = Main
 
-    local Library = {Tabs = {}}
+    local Tabs = {}
 
-    function Library:AddTab(TabName)
+    function Tabs:AddTab(TabName)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, 0, 0, 35)
         TabBtn.BackgroundTransparency = 1
         TabBtn.Text = "          " .. TabName
-        TabBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
+        TabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
         TabBtn.Font = Enum.Font.GothamMedium
         TabBtn.TextSize = 13
         TabBtn.TextXAlignment = Enum.TextXAlignment.Left
         TabBtn.Parent = TabHolder
+
+        -- Aktif Tab Çizgisi
+        local Line = Instance.new("Frame")
+        Line.Size = UDim2.new(0, 3, 0, 16)
+        Line.Position = UDim2.new(0, 10, 0.5, -8)
+        Line.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
+        Line.Visible = false
+        Line.Parent = TabBtn
 
         local Page = Instance.new("ScrollingFrame")
         Page.Size = UDim2.new(1, 0, 1, 0)
@@ -118,50 +129,57 @@ function FeralLib:CreateWindow(Config)
 
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(Container:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
-            for _, v in pairs(TabHolder:GetChildren()) do if v:IsA("TextButton") then v.TextColor3 = Color3.fromRGB(160, 160, 160) end end
+            for _, v in pairs(TabHolder:GetChildren()) do if v:IsA("TextButton") then 
+                v.TextColor3 = Color3.fromRGB(150, 150, 150) 
+                v.Frame.Visible = false
+            end end
             Page.Visible = true
             TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Line.Visible = true
         end)
 
-        local TabItems = {}
-        function TabItems:AddToggle(Name, Config)
-            local Tgl = {Value = Config.Default or false}
-            local Frame = Instance.new("TextButton") -- Tıklanabilir alan geniş olsun diye TextButton
-            Frame.Size = UDim2.new(0, 440, 0, 40)
-            Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-            Frame.BackgroundTransparency = 0.4
-            Frame.Text = ""
-            Frame.Parent = Page
-            Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 4)
+        local Elements = {}
 
-            local Lbl = Instance.new("TextLabel")
-            Lbl.Text = Name
-            Lbl.Size = UDim2.new(1, -50, 1, 0)
-            Lbl.Position = UDim2.new(0, 15, 0, 0)
-            Lbl.TextColor3 = Color3.fromRGB(240, 240, 240)
-            Lbl.Font = Enum.Font.Gotham
-            Lbl.TextSize = 13
-            Lbl.BackgroundTransparency = 1
-            Lbl.TextXAlignment = Enum.TextXAlignment.Left
-            Lbl.Parent = Frame
+        function Elements:AddToggle(Name, Config)
+            local Tgl = {Value = Config.Default or false}
+            local ToggleFrame = Instance.new("TextButton")
+            ToggleFrame.Size = UDim2.new(0, 440, 0, 42)
+            ToggleFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+            ToggleFrame.BackgroundTransparency = 0.5
+            ToggleFrame.Text = ""
+            ToggleFrame.Parent = Page
+            Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0, 4)
+
+            local TTitle = Instance.new("TextLabel")
+            TTitle.Text = Name
+            TTitle.Size = UDim2.new(1, -50, 1, 0)
+            TTitle.Position = UDim2.new(0, 15, 0, 0)
+            TTitle.TextColor3 = Color3.fromRGB(240, 240, 240)
+            TTitle.Font = Enum.Font.Gotham
+            TTitle.TextSize = 13
+            TTitle.BackgroundTransparency = 1
+            TTitle.TextXAlignment = Enum.TextXAlignment.Left
+            TTitle.Parent = ToggleFrame
 
             local Box = Instance.new("Frame")
             Box.Size = UDim2.new(0, 16, 0, 16)
             Box.Position = UDim2.new(1, -30, 0.5, -8)
             Box.BackgroundColor3 = Tgl.Value and Color3.fromRGB(85, 170, 255) or Color3.fromRGB(0, 0, 0)
-            Box.Parent = Frame
+            Box.Parent = ToggleFrame
             Instance.new("UIStroke", Box).Color = Color3.fromRGB(85, 170, 255)
 
-            Frame.MouseButton1Click:Connect(function()
+            ToggleFrame.MouseButton1Click:Connect(function()
                 Tgl.Value = not Tgl.Value
                 TweenService:Create(Box, TweenInfo.new(0.2), {BackgroundColor3 = Tgl.Value and Color3.fromRGB(85, 170, 255) or Color3.fromRGB(0, 0, 0)}):Play()
                 Config.Callback(Tgl.Value)
             end)
             return Tgl
         end
-        return TabItems
+
+        return Elements
     end
-    return Library
+
+    return Tabs
 end
 
-return FeralLib
+return Library
